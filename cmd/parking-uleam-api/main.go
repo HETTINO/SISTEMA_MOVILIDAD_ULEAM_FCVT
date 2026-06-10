@@ -1,0 +1,70 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/handlers"
+	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/middleware"
+	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/modelos"
+	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/storage"
+
+	"github.com/glebarez/sqlite"
+	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
+	"gorm.io/gorm"
+)
+
+func main() {
+	// 1. Abrir SQLite y migrar el esquema
+	db, err := gorm.Open(sqlite.Open("parking.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatal("no se pudo abrir la base de datos: ", err)
+	}
+	if err := db.AutoMigrate(&modelos.Parqueadero{}); err != nil {
+		log.Fatal("falló AutoMigrate: ", err)
+	}
+
+	// 2. Crear el almacenamiento SQLite y sembrar si está vacío
+	parkingStore := storage.NuevoAlmacenSQLite(db)
+	parkingStore.SembrarSiVacio()
+
+	// 3. Inicializar handlers
+	parkingHandler := handlers.NewParkingHandler(parkingStore)
+
+	// 4. Router
+	r := chi.NewRouter()
+	r.Use(chimw.Logger)
+	r.Use(chimw.Recoverer)
+	r.Use(middleware.CORS)
+
+	// =========================
+	// RUTAS DE PARQUEADEROS
+	// =========================
+	r.Route("/api/v1/parking", func(r chi.Router) {
+		r.Get("/", parkingHandler.ListarParqueaderos)
+		r.Get("/{id}", parkingHandler.ObtenerParqueadero)
+		r.Post("/", parkingHandler.CrearParqueadero)
+		r.Put("/{id}", parkingHandler.ActualizarParqueadero)
+		r.Delete("/{id}", parkingHandler.EliminarParqueadero)
+	})
+
+	// =========================
+	// RUTAS DE ESPACIOS
+	// =========================
+	r.Route("/api/v1/espacios", func(r chi.Router) {
+		r.Get("/", parkingHandler.ListarEspacios)
+	})
+
+	fmt.Println("===================================")
+	fmt.Println(" SISTEMA MOVILIDAD ULEAM FCVT ")
+	fmt.Println("===================================")
+	fmt.Println("Servidor iniciado en:")
+	fmt.Println("http://localhost:8080")
+	fmt.Println("===================================")
+
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatal(err)
+	}
+}

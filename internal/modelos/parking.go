@@ -36,6 +36,7 @@ type CrearParqueaderoRequest struct {
 	Nombre    string `json:"nombre"`
 	Ubicacion string `json:"ubicacion"`
 	Capacidad int    `json:"capacidad"`
+	Activo    bool   `json:"activo"`
 }
 
 type CrearEspacioRequest struct {
@@ -55,4 +56,11 @@ type DisponibilidadResponse struct {
 	TotalEspacios int    `json:"total_espacios"`
 	Disponibles   int    `json:"disponibles"`
 	Ocupados      int    `json:"ocupados"`
+}
+
+type ActualizarParqueaderoRequest struct {
+	Nombre    string `json:"nombre"`
+	Ubicacion string `json:"ubicacion"`
+	Capacidad int    `json:"capacidad"`
+	Activo    bool   `json:"activo"`
 }
