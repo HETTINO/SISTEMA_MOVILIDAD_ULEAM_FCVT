@@ -87,6 +87,46 @@ func (m *Memoria) SeedOcupaciones() {
 	}
 	m.nextOcupacionID = 3
 }
+func (m *Memoria) SeedModuloAcceso() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// 1. Usuarios por defecto
+	m.usuarios = []modelos.Usuario{
+		{Cedula: "1312345678", Nombre: "Shirley Nathaly", Contrasena: "123456", Email: "shirley@uleam.edu.ec", Rol: "Estudiante"},
+		{Cedula: "1398765432", Nombre: "Josue Lopez", Contrasena: "654321", Email: "josue@uleam.edu.ec", Rol: "Estudiante"},
+		{Cedula: "1301122334", Nombre: "Carlos Docente", Contrasena: "profesor2026", Email: "carlos.docente@uleam.edu.ec", Rol: "Docente"},
+	}
+
+	// 2. Vehículos vinculados a las cédulas anteriores
+	m.vehiculos = []modelos.Vehiculo{
+		{Placa: "ABC-1234", IDUsuario: "1312345678", TipoVehiculo: "Carro", Marca: "Chevrolet", Modelo: "Sail", Color: "Blanco", Año: 2022},
+		{Placa: "XYZ-5678", IDUsuario: "1398765432", TipoVehiculo: "Moto", Marca: "Honda", Modelo: "CB190R", Color: "Negro", Año: 2023},
+	}
+
+	// 3. Puntos de Acceso (Garitas físicas de la ULEAM)
+	m.puntosDeAcceso = []modelos.PuntoDeAcceso{
+		{IDPuntoAcceso: 1, Frecuencia: "Alta", Ubicacion: "Garita Principal (Vía San Mateo)"},
+		{IDPuntoAcceso: 2, Frecuencia: "Media", Ubicacion: "Garita Posterior (Facultad Ingeniería)"},
+	}
+	m.nextPuntoAccesoID = 3 // El siguiente ID libre será el 3
+
+	// 4. Historial inicial (Opcional: Un vehículo que ya entró hace una hora y salió recién)
+	ahora := time.Now()
+	haceUnaHora := ahora.Add(-1 * time.Hour)
+	m.accesos = []modelos.Acceso{
+		{
+			IDAcceso:      1,
+			PlacaVehiculo: "XYZ-5678",
+			IDPuntoAcceso: 2,
+			TiempoEntrada: haceUnaHora,
+			TiempoSalida:  &ahora,
+			Estado:        "Salido",
+			Observaciones: "Salida regular sin novedades",
+		},
+	}
+	m.nextAccesoID = 2 // El siguiente acceso en Postman tomará el ID 2 automáticamente
+}
 
 // -----Parqueaderos-----
 func (m *Memoria) ListarParqueaderos() []modelos.Parqueadero {
