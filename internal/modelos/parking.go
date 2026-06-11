@@ -40,6 +40,7 @@ type CrearParqueaderoRequest struct {
 }
 
 type CrearEspacioRequest struct {
+	ID            string `json:"id"`
 	ParqueaderoID string `json:"parqueadero_id"`
 	Numero        string `json:"numero"`
 }
@@ -47,6 +48,7 @@ type CrearEspacioRequest struct {
 type OcuparEspacioRequest struct {
 	EspacioID string `json:"espacio_id"`
 	Placa     string `json:"placa"`
+	ID        int    `json:"id"` // ← agregar esto
 }
 
 // --- Response bodies ---

@@ -95,6 +95,7 @@ func (a *AlmacenSQLite) BuscarEspacioPorID(id string) (modelos.Espacio, bool) {
 
 func (a *AlmacenSQLite) CrearEspacio(req modelos.CrearEspacioRequest) (modelos.Espacio, bool) {
 	e := modelos.Espacio{
+		ID:            req.ID, // ← usar el ID del request
 		ParqueaderoID: req.ParqueaderoID,
 		Numero:        req.Numero,
 		Disponible:    true,
@@ -144,10 +145,8 @@ func (a *AlmacenSQLite) CrearOcupacion(req modelos.OcuparEspacioRequest) (modelo
 	var ultima modelos.Ocupacion
 	a.db.Order("id DESC").First(&ultima)
 
-	nuevoID := ultima.ID + 1
-
 	o := modelos.Ocupacion{
-		ID:        nuevoID,
+		ID:        req.ID, // ← usar el del request
 		EspacioID: req.EspacioID,
 		Placa:     req.Placa,
 		Entrada:   time.Now(),
