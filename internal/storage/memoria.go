@@ -15,15 +15,39 @@ type Memoria struct {
 	nextparkingID   int
 	nextEspacioID   int
 	nextOcupacionID int
-	mu              sync.RWMutex
+
+	// === CAMPOS DEL MÓDULO: ACCESO ===
+	usuarios       []modelos.Usuario
+	vehiculos      []modelos.Vehiculo
+	puntosDeAcceso []modelos.PuntoDeAcceso
+	accesos        []modelos.Acceso
+
+	nextPuntoAccesoID int
+	nextAccesoID      int
+	// ===============================
+
+	mu sync.RWMutex
 }
 
 func NewMemoria() *Memoria {
 	return &Memoria{
-		parking:       []modelos.Parqueadero{},
-		espacios:      []modelos.Espacio{},
-		nextEspacioID: 1,
-		nextparkingID: 1,
+		parking:     []modelos.Parqueadero{},
+		espacios:    []modelos.Espacio{},
+		ocupaciones: []modelos.Ocupacion{},
+
+		nextEspacioID:   1,
+		nextparkingID:   1,
+		nextOcupacionID: 1,
+
+		// === INICIALIZACIÓN DEL MÓDULO ACCESO ===
+		usuarios:       []modelos.Usuario{},
+		vehiculos:      []modelos.Vehiculo{},
+		puntosDeAcceso: []modelos.PuntoDeAcceso{},
+		accesos:        []modelos.Acceso{},
+
+		nextPuntoAccesoID: 1,
+		nextAccesoID:      1,
+		// ===================================
 	}
 }
 
