@@ -30,3 +30,46 @@ CREATE TABLE ocupaciones (
         REFERENCES espacios(id)
         ON DELETE CASCADE
 );
+
+-- ==========================================
+-- MÓDULO: TRANSPORTE INTERNO - CRISTINA
+-- ==========================================
+
+CREATE TABLE rutas (
+    id     TEXT PRIMARY KEY,
+    nombre      TEXT NOT NULL,
+    descripcion TEXT NOT NULL
+);
+
+CREATE TABLE paradas (
+    id_parada    TEXT PRIMARY KEY,
+    nombre       TEXT NOT NULL,
+    latitud      REAL NOT NULL,
+    longitu      REAL NOT NULL,
+    ruta_id     TEXT NOT NULL
+);
+
+CREATE TABLE carritos (
+    id     TEXT PRIMARY KEY,
+    nombre_carrito TEXT NOT NULL,
+    capacidad      INTEGER NOT NULL,
+    estado         TEXT NOT NULL,
+    ruta_id        TEXT NOT NULL
+);
+
+CREATE TABLE locaciones (
+    id TEXT PRIMARY KEY,
+    latitud     REAL NOT NULL,
+    longitud    REAL NOT NULL,
+    time_stamp  TEXT NOT NULL,
+    carrito_id  TEXT NOT NULL
+);
+
+CREATE TABLE solicitudes (
+    id   TEXT PRIMARY KEY,
+    cedula_usuario TEXT NOT NULL,
+    cant_personas  INTEGER NOT NULL,
+    punto_destino  TEXT NOT NULL,
+    estado         TEXT NOT NULL,
+    carrito_id     TEXT
+);
