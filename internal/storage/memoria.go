@@ -16,7 +16,19 @@ type Memoria struct {
 	nextEspacioID   int
 	nextOcupacionID int
 	mu              sync.RWMutex
+
+
+	// MODULO: TRANSPORTE INTERNO CRISTINA
+	rutas             []modelos.Ruta
+	nextRutaID        int
+	paradas           []modelos.Parada
+	nextParadaID      int
+	solicitudes       []modelos.Solicitud
+	nextSolicitudID   int
+
 }
+
+
 
 func NewMemoria() *Memoria {
 	return &Memoria{
@@ -24,6 +36,14 @@ func NewMemoria() *Memoria {
 		espacios:      []modelos.Espacio{},
 		nextEspacioID: 1,
 		nextparkingID: 1,
+
+		// MODULO: TRANSPORTE INTERNO CRISTINA (Inicialización)
+		rutas:           []modelos.Ruta{},
+		nextRutaID:      1,
+		paradas:         []modelos.Parada{},
+		nextParadaID:    1,
+		solicitudes:     []modelos.Solicitud{},
+		nextSolicitudID: 1,
 	}
 }
 
@@ -273,6 +293,8 @@ func (m *Memoria) LiberarOcupacion(id string) (modelos.Ocupacion, bool) {
 
 	return modelos.Ocupacion{}, false
 }
+
+
 
 // Chequeo en tiempo de compilación: Memoria debe cumplir Almacen.
 var _ Almacen = (*Memoria)(nil)
