@@ -82,10 +82,3 @@ func (h *ParkingHandler) EliminarParqueadero(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"mensaje": "parqueadero eliminado correctamente"})
 }
-
-// GET /api/v1/espacios
-func (h *ParkingHandler) ListarEspacios(w http.ResponseWriter, r *http.Request) {
-	espacios := h.store.ListarEspacios()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(espacios)
-}

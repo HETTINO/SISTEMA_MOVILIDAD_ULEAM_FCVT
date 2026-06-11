@@ -7,7 +7,129 @@ package sqlcdb
 
 import (
 	"context"
+	"database/sql"
+	"time"
 )
+
+const actualizarEspacio = `-- name: ActualizarEspacio :one
+UPDATE espacios
+SET
+    numero = ?,
+    disponible = ?
+WHERE id = ?
+RETURNING id, parqueadero_id, numero, disponible, reservado_hasta
+`
+
+type ActualizarEspacioParams struct {
+	Numero     string
+	Disponible bool
+	ID         string
+}
+
+func (q *Queries) ActualizarEspacio(ctx context.Context, arg ActualizarEspacioParams) (Espacio, error) {
+	row := q.db.QueryRowContext(ctx, actualizarEspacio, arg.Numero, arg.Disponible, arg.ID)
+	var i Espacio
+	err := row.Scan(
+		&i.ID,
+		&i.ParqueaderoID,
+		&i.Numero,
+		&i.Disponible,
+		&i.ReservadoHasta,
+	)
+	return i, err
+}
+
+const actualizarOcupacion = `-- name: ActualizarOcupacion :one
+UPDATE ocupaciones
+SET
+    salida = ?,
+    activa = ?
+WHERE id = ?
+RETURNING id, espacio_id, placa, entrada, salida, activa
+`
+
+type ActualizarOcupacionParams struct {
+	Salida sql.NullTime
+	Activa bool
+	ID     string
+}
+
+func (q *Queries) ActualizarOcupacion(ctx context.Context, arg ActualizarOcupacionParams) (Ocupacione, error) {
+	row := q.db.QueryRowContext(ctx, actualizarOcupacion, arg.Salida, arg.Activa, arg.ID)
+	var i Ocupacione
+	err := row.Scan(
+		&i.ID,
+		&i.EspacioID,
+		&i.Placa,
+		&i.Entrada,
+		&i.Salida,
+		&i.Activa,
+	)
+	return i, err
+}
+
+const crearEspacio = `-- name: CrearEspacio :exec
+INSERT INTO espacios (
+    id,
+    parqueadero_id,
+    numero,
+    disponible,
+    reservado_hasta
+)
+VALUES (?, ?, ?, ?, ?)
+`
+
+type CrearEspacioParams struct {
+	ID             string
+	ParqueaderoID  string
+	Numero         string
+	Disponible     bool
+	ReservadoHasta sql.NullTime
+}
+
+func (q *Queries) CrearEspacio(ctx context.Context, arg CrearEspacioParams) error {
+	_, err := q.db.ExecContext(ctx, crearEspacio,
+		arg.ID,
+		arg.ParqueaderoID,
+		arg.Numero,
+		arg.Disponible,
+		arg.ReservadoHasta,
+	)
+	return err
+}
+
+const crearOcupacion = `-- name: CrearOcupacion :exec
+INSERT INTO ocupaciones (
+    id,
+    espacio_id,
+    placa,
+    entrada,
+    salida,
+    activa
+)
+VALUES (?, ?, ?, ?, ?, ?)
+`
+
+type CrearOcupacionParams struct {
+	ID        string
+	EspacioID string
+	Placa     string
+	Entrada   time.Time
+	Salida    sql.NullTime
+	Activa    bool
+}
+
+func (q *Queries) CrearOcupacion(ctx context.Context, arg CrearOcupacionParams) error {
+	_, err := q.db.ExecContext(ctx, crearOcupacion,
+		arg.ID,
+		arg.EspacioID,
+		arg.Placa,
+		arg.Entrada,
+		arg.Salida,
+		arg.Activa,
+	)
+	return err
+}
 
 const crearParqueadero = `-- name: CrearParqueadero :exec
 INSERT INTO parqueaderos (
@@ -36,6 +158,26 @@ func (q *Queries) CrearParqueadero(ctx context.Context, arg CrearParqueaderoPara
 		arg.Capacidad,
 		arg.Activo,
 	)
+	return err
+}
+
+const eliminarEspacio = `-- name: EliminarEspacio :exec
+DELETE FROM espacios
+WHERE id = ?
+`
+
+func (q *Queries) EliminarEspacio(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, eliminarEspacio, id)
+	return err
+}
+
+const eliminarOcupacion = `-- name: EliminarOcupacion :exec
+DELETE FROM ocupaciones
+WHERE id = ?
+`
+
+func (q *Queries) EliminarOcupacion(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, eliminarOcupacion, id)
 	return err
 }
 
@@ -82,6 +224,41 @@ func (q *Queries) ListarEspacios(ctx context.Context) ([]Espacio, error) {
 	return items, nil
 }
 
+const listarOcupaciones = `-- name: ListarOcupaciones :many
+SELECT id, espacio_id, placa, entrada, salida, activa
+FROM ocupaciones
+`
+
+func (q *Queries) ListarOcupaciones(ctx context.Context) ([]Ocupacione, error) {
+	rows, err := q.db.QueryContext(ctx, listarOcupaciones)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Ocupacione
+	for rows.Next() {
+		var i Ocupacione
+		if err := rows.Scan(
+			&i.ID,
+			&i.EspacioID,
+			&i.Placa,
+			&i.Entrada,
+			&i.Salida,
+			&i.Activa,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listarParqueaderos = `-- name: ListarParqueaderos :many
 SELECT id, nombre, ubicacion, capacidad, activo FROM parqueaderos
 `
@@ -113,6 +290,45 @@ func (q *Queries) ListarParqueaderos(ctx context.Context) ([]Parqueadero, error)
 		return nil, err
 	}
 	return items, nil
+}
+
+const obtenerEspacio = `-- name: ObtenerEspacio :one
+SELECT id, parqueadero_id, numero, disponible, reservado_hasta
+FROM espacios
+WHERE id = ?
+`
+
+func (q *Queries) ObtenerEspacio(ctx context.Context, id string) (Espacio, error) {
+	row := q.db.QueryRowContext(ctx, obtenerEspacio, id)
+	var i Espacio
+	err := row.Scan(
+		&i.ID,
+		&i.ParqueaderoID,
+		&i.Numero,
+		&i.Disponible,
+		&i.ReservadoHasta,
+	)
+	return i, err
+}
+
+const obtenerOcupacion = `-- name: ObtenerOcupacion :one
+SELECT id, espacio_id, placa, entrada, salida, activa
+FROM ocupaciones
+WHERE id = ?
+`
+
+func (q *Queries) ObtenerOcupacion(ctx context.Context, id string) (Ocupacione, error) {
+	row := q.db.QueryRowContext(ctx, obtenerOcupacion, id)
+	var i Ocupacione
+	err := row.Scan(
+		&i.ID,
+		&i.EspacioID,
+		&i.Placa,
+		&i.Entrada,
+		&i.Salida,
+		&i.Activa,
+	)
+	return i, err
 }
 
 const obtenerParqueadero = `-- name: ObtenerParqueadero :one

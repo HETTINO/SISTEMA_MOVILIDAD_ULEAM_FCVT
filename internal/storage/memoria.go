@@ -1,20 +1,21 @@
 package storage
 
 import (
-	"sync"
-
 	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/modelos"
 	"strconv"
+	"sync"
+	"time"
 )
 
 type Memoria struct {
-	parking  []modelos.Parqueadero
-	espacios []modelos.Espacio
+	parking     []modelos.Parqueadero
+	espacios    []modelos.Espacio
+	ocupaciones []modelos.Ocupacion
 
-	nextparkingID int
-	nextEspacioID int
-
-	mu sync.RWMutex
+	nextparkingID   int
+	nextEspacioID   int
+	nextOcupacionID int
+	mu              sync.RWMutex
 }
 
 func NewMemoria() *Memoria {
@@ -50,6 +51,19 @@ func (m *Memoria) SeedEspacios() {
 	}
 	m.nextEspacioID = 6
 }
+
+func (m *Memoria) SeedOcupaciones() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ocupaciones = []modelos.Ocupacion{
+		{ID: 1, EspacioID: "1", Placa: "abc1234", Entrada: time.Now().Add(-2 * time.Hour), Activa: true},
+		{ID: 2, EspacioID: "2", Placa: "xyz5678", Entrada: time.Now().Add(-1 * time.Hour), Activa: true},
+		{ID: 3, EspacioID: "3", Placa: "del9012", Entrada: time.Now().Add(-30 * time.Minute), Activa: true},
+	}
+	m.nextOcupacionID = 3
+}
+
+// -----Parqueaderos-----
 func (m *Memoria) ListarParqueaderos() []modelos.Parqueadero {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -162,6 +176,102 @@ func (m *Memoria) CrearEspacio(req modelos.CrearEspacioRequest) (modelos.Espacio
 	m.nextEspacioID++
 	m.espacios = append(m.espacios, e)
 	return e, true
+}
+func (m *Memoria) ActualizarEspacio(id string, req modelos.ActualizarEspacioRequest) (modelos.Espacio, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, e := range m.espacios {
+		if e.ID == id {
+			if req.Numero != "" {
+				m.espacios[i].Numero = req.Numero
+			}
+			return m.espacios[i], true
+		}
+	}
+	return modelos.Espacio{}, false
+}
+
+func (m *Memoria) EliminarEspacio(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, e := range m.espacios {
+		if e.ID == id {
+			m.espacios = append(m.espacios[:i], m.espacios[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+func (m *Memoria) ListarOcupaciones() []modelos.Ocupacion {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	copia := make([]modelos.Ocupacion, len(m.ocupaciones))
+	copy(copia, m.ocupaciones)
+	return copia
+}
+
+func (m *Memoria) BuscarOcupacionPorID(id string) (modelos.Ocupacion, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, o := range m.ocupaciones {
+		if strconv.Itoa(o.ID) == id {
+			return o, true
+		}
+	}
+	return modelos.Ocupacion{}, false
+}
+
+func (m *Memoria) CrearOcupacion(req modelos.OcuparEspacioRequest) (modelos.Ocupacion, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	o := modelos.Ocupacion{
+		ID:        m.nextOcupacionID,
+		EspacioID: req.EspacioID,
+		Placa:     req.Placa,
+		Entrada:   time.Now(),
+		Activa:    true,
+	}
+
+	m.nextOcupacionID++
+	m.ocupaciones = append(m.ocupaciones, o)
+
+	return o, true
+}
+func (m *Memoria) ActualizarOcupacion(id string, req modelos.ActualizarOcupacionRequest) (modelos.Ocupacion, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, o := range m.ocupaciones {
+		if strconv.Itoa(o.ID) == id {
+			if req.Salida != nil {
+				m.ocupaciones[i].Salida = req.Salida
+				m.ocupaciones[i].Activa = false
+			}
+			return m.ocupaciones[i], true
+		}
+	}
+	return modelos.Ocupacion{}, false
+}
+
+func (m *Memoria) LiberarOcupacion(id string) (modelos.Ocupacion, bool) {
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for i, o := range m.ocupaciones {
+
+		if strconv.Itoa(o.ID) == id {
+
+			ahora := time.Now()
+
+			m.ocupaciones[i].Salida = &ahora
+			m.ocupaciones[i].Activa = false
+
+			return m.ocupaciones[i], true
+		}
+	}
+
+	return modelos.Ocupacion{}, false
 }
 
 // Chequeo en tiempo de compilación: Memoria debe cumplir Almacen.

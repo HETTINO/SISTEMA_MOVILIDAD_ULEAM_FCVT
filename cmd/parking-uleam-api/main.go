@@ -22,7 +22,12 @@ func main() {
 	if err != nil {
 		log.Fatal("no se pudo abrir la base de datos: ", err)
 	}
-	if err := db.AutoMigrate(&modelos.Parqueadero{}); err != nil {
+
+	if err := db.AutoMigrate(
+		&modelos.Parqueadero{},
+		&modelos.Espacio{},
+		&modelos.Ocupacion{},
+	); err != nil {
 		log.Fatal("falló AutoMigrate: ", err)
 	}
 
@@ -54,7 +59,23 @@ func main() {
 	// RUTAS DE ESPACIOS
 	// =========================
 	r.Route("/api/v1/espacios", func(r chi.Router) {
+
 		r.Get("/", parkingHandler.ListarEspacios)
+		r.Get("/{id}", parkingHandler.ObtenerEspacio)
+
+		r.Post("/", parkingHandler.CrearEspacio)
+		r.Put("/{id}", parkingHandler.ActualizarEspacio)
+		r.Delete("/{id}", parkingHandler.EliminarEspacio)
+	})
+
+	// Rutas de ocpuacion
+	r.Route("/api/v1/ocupaciones", func(r chi.Router) {
+		r.Get("/", parkingHandler.ListarOcupaciones)
+		r.Get("/{id}", parkingHandler.ObtenerOcupacion)
+
+		r.Post("/", parkingHandler.CrearOcupacion)
+
+		r.Put("/{id}/liberar", parkingHandler.LiberarOcupacion)
 	})
 
 	fmt.Println("===================================")

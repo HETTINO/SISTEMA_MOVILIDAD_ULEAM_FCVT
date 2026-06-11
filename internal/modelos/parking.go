@@ -22,7 +22,7 @@ type Espacio struct {
 
 // Ocupacion registra cuando un vehículo ocupa un espacio
 type Ocupacion struct {
-	ID        string     `json:"id"`
+	ID        int        `json:"id"`
 	EspacioID string     `json:"espacio_id"`
 	Placa     string     `json:"placa"`
 	Entrada   time.Time  `json:"entrada"`
@@ -45,7 +45,8 @@ type CrearEspacioRequest struct {
 }
 
 type OcuparEspacioRequest struct {
-	Placa string `json:"placa"`
+	EspacioID string `json:"espacio_id"`
+	Placa     string `json:"placa"`
 }
 
 // --- Response bodies ---
@@ -63,4 +64,13 @@ type ActualizarParqueaderoRequest struct {
 	Ubicacion string `json:"ubicacion"`
 	Capacidad int    `json:"capacidad"`
 	Activo    bool   `json:"activo"`
+}
+
+type ActualizarEspacioRequest struct {
+	Numero     string `json:"numero"`
+	Disponible bool   `json:"disponible"`
+}
+
+type ActualizarOcupacionRequest struct {
+	Salida *time.Time `json:"salida"`
 }
