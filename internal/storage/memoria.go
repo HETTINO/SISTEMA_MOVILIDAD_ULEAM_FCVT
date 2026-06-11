@@ -63,6 +63,7 @@ func (m *Memoria) SeedParqueaderos() {
 	}
 	m.nextparkingID = 6
 }
+
 func (m *Memoria) SeedEspacios() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -85,6 +86,46 @@ func (m *Memoria) SeedOcupaciones() {
 		{ID: 3, EspacioID: "3", Placa: "del9012", Entrada: time.Now().Add(-30 * time.Minute), Activa: true},
 	}
 	m.nextOcupacionID = 3
+}
+func (m *Memoria) SeedModuloAcceso() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// 1. Usuarios por defecto
+	m.usuarios = []modelos.Usuario{
+		{Cedula: "1312345678", Nombre: "Shirley Nathaly", Contrasena: "123456", Email: "shirley@uleam.edu.ec", Rol: "Estudiante"},
+		{Cedula: "1398765432", Nombre: "Josue Lopez", Contrasena: "654321", Email: "josue@uleam.edu.ec", Rol: "Estudiante"},
+		{Cedula: "1301122334", Nombre: "Carlos Docente", Contrasena: "profesor2026", Email: "carlos.docente@uleam.edu.ec", Rol: "Docente"},
+	}
+
+	// 2. Vehículos vinculados a las cédulas anteriores
+	m.vehiculos = []modelos.Vehiculo{
+		{Placa: "ABC-1234", IDUsuario: "1312345678", TipoVehiculo: "Carro", Marca: "Chevrolet", Modelo: "Sail", Color: "Blanco", Año: 2022},
+		{Placa: "XYZ-5678", IDUsuario: "1398765432", TipoVehiculo: "Moto", Marca: "Honda", Modelo: "CB190R", Color: "Negro", Año: 2023},
+	}
+
+	// 3. Puntos de Acceso (Garitas físicas de la ULEAM)
+	m.puntosDeAcceso = []modelos.PuntoDeAcceso{
+		{IDPuntoAcceso: 1, Frecuencia: "Alta", Ubicacion: "Garita Principal (Vía San Mateo)"},
+		{IDPuntoAcceso: 2, Frecuencia: "Media", Ubicacion: "Garita Posterior (Facultad Ingeniería)"},
+	}
+	m.nextPuntoAccesoID = 3 // El siguiente ID libre será el 3
+
+	// 4. Historial inicial (Opcional: Un vehículo que ya entró hace una hora y salió recién)
+	ahora := time.Now()
+	haceUnaHora := ahora.Add(-1 * time.Hour)
+	m.accesos = []modelos.Acceso{
+		{
+			IDAcceso:      1,
+			PlacaVehiculo: "XYZ-5678",
+			IDPuntoAcceso: 2,
+			TiempoEntrada: haceUnaHora,
+			TiempoSalida:  &ahora,
+			Estado:        "Salido",
+			Observaciones: "Salida regular sin novedades",
+		},
+	}
+	m.nextAccesoID = 2 // El siguiente acceso en Postman tomará el ID 2 automáticamente
 }
 
 // -----Parqueaderos-----
@@ -131,19 +172,15 @@ func (m *Memoria) ActualizarParqueadero(id string, req modelos.ActualizarParquea
 
 	for i, p := range m.parking {
 		if p.ID == id {
-
 			if req.Nombre != "" {
 				m.parking[i].Nombre = req.Nombre
 			}
-
 			if req.Ubicacion != "" {
 				m.parking[i].Ubicacion = req.Ubicacion
 			}
-
 			if req.Capacidad > 0 {
 				m.parking[i].Capacidad = req.Capacidad
 			}
-
 			return m.parking[i], true
 		}
 	}
@@ -156,7 +193,6 @@ func (m *Memoria) EliminarParqueadero(id string) bool {
 	defer m.mu.Unlock()
 
 	for i, p := range m.parking {
-
 		if p.ID == id {
 			m.parking = append(m.parking[:i], m.parking[i+1:]...)
 			return true
@@ -166,7 +202,7 @@ func (m *Memoria) EliminarParqueadero(id string) bool {
 	return false
 }
 
-// ListarEspacios, BuscarEspacioPorID, CrearEspacio
+// -----Espacios-----
 func (m *Memoria) ListarEspacios() []modelos.Espacio {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -201,6 +237,7 @@ func (m *Memoria) CrearEspacio(req modelos.CrearEspacioRequest) (modelos.Espacio
 	m.espacios = append(m.espacios, e)
 	return e, true
 }
+
 func (m *Memoria) ActualizarEspacio(id string, req modelos.ActualizarEspacioRequest) (modelos.Espacio, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -226,6 +263,8 @@ func (m *Memoria) EliminarEspacio(id string) bool {
 	}
 	return false
 }
+
+// -----Ocupaciones-----
 func (m *Memoria) ListarOcupaciones() []modelos.Ocupacion {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -262,6 +301,7 @@ func (m *Memoria) CrearOcupacion(req modelos.OcuparEspacioRequest) (modelos.Ocup
 
 	return o, true
 }
+
 func (m *Memoria) ActualizarOcupacion(id string, req modelos.ActualizarOcupacionRequest) (modelos.Ocupacion, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -278,19 +318,14 @@ func (m *Memoria) ActualizarOcupacion(id string, req modelos.ActualizarOcupacion
 }
 
 func (m *Memoria) LiberarOcupacion(id string) (modelos.Ocupacion, bool) {
-
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	for i, o := range m.ocupaciones {
-
 		if strconv.Itoa(o.ID) == id {
-
 			ahora := time.Now()
-
 			m.ocupaciones[i].Salida = &ahora
 			m.ocupaciones[i].Activa = false
-
 			return m.ocupaciones[i], true
 		}
 	}
@@ -299,10 +334,97 @@ func (m *Memoria) LiberarOcupacion(id string) (modelos.Ocupacion, bool) {
 }
 
 // =================================================================
-// ----- MÓDULO: ACCESO DE ENTRADA Y SALIDA (MÉTODOS CRUD) -----
+// ----- MÓDULO: ACCESO DE ENTRADA Y SALIDA (CRUD) -----
 // =================================================================
 
-// ListarAccesos devuelve una copia segura de todos los registros de acceso
+// ----- MÉTODOS: USUARIOS -----
+func (m *Memoria) ListarUsuarios() []modelos.Usuario {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	copia := make([]modelos.Usuario, len(m.usuarios))
+	copy(copia, m.usuarios)
+	return copia
+}
+
+func (m *Memoria) BuscarUsuarioPorID(id string) (modelos.Usuario, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, u := range m.usuarios {
+		if u.Cedula == id { // Usa Cedula en lugar de ID
+			return u, true
+		}
+	}
+	return modelos.Usuario{}, false
+}
+
+func (m *Memoria) CrearUsuario(u modelos.Usuario) modelos.Usuario {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.usuarios = append(m.usuarios, u)
+	return u
+}
+
+// ----- MÉTODOS: VEHÍCULOS -----
+func (m *Memoria) ListarVehiculos() []modelos.Vehiculo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	copia := make([]modelos.Vehiculo, len(m.vehiculos))
+	copy(copia, m.vehiculos)
+	return copia
+}
+
+func (m *Memoria) BuscarVehiculoPorID(id string) (modelos.Vehiculo, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, v := range m.vehiculos {
+		if v.Placa == id {
+			return v, true
+		}
+	}
+	return modelos.Vehiculo{}, false
+}
+
+func (m *Memoria) CrearVehiculo(v modelos.Vehiculo) modelos.Vehiculo {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.vehiculos = append(m.vehiculos, v)
+	return v
+}
+
+// ----- MÉTODOS: PUNTOS DE ACCESO -----
+func (m *Memoria) ListarPuntosAcceso() []modelos.PuntoDeAcceso {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	copia := make([]modelos.PuntoDeAcceso, len(m.puntosDeAcceso))
+	copy(copia, m.puntosDeAcceso)
+	return copia
+}
+
+func (m *Memoria) BuscarPuntoAccesoPorID(id string) (modelos.PuntoDeAcceso, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return modelos.PuntoDeAcceso{}, false
+	}
+	for _, p := range m.puntosDeAcceso {
+		if p.IDPuntoAcceso == idInt { // Usa IDPuntoAcceso en lugar de ID
+			return p, true
+		}
+	}
+	return modelos.PuntoDeAcceso{}, false
+}
+
+func (m *Memoria) CrearPuntoAcceso(p modelos.PuntoDeAcceso) modelos.PuntoDeAcceso {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	p.IDPuntoAcceso = m.nextPuntoAccesoID // Usa IDPuntoAcceso en lugar de ID
+	m.nextPuntoAccesoID++
+	m.puntosDeAcceso = append(m.puntosDeAcceso, p)
+	return p
+}
+
+// ----- MÉTODOS: ACCESOS (TRANSACCIONAL) -----
 func (m *Memoria) ListarAccesos() []modelos.Acceso {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -312,7 +434,6 @@ func (m *Memoria) ListarAccesos() []modelos.Acceso {
 	return copia
 }
 
-// BuscarAccesoPorID busca un registro usando un ID string (convirtiéndolo a int)
 func (m *Memoria) BuscarAccesoPorID(id string) (modelos.Acceso, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -323,28 +444,26 @@ func (m *Memoria) BuscarAccesoPorID(id string) (modelos.Acceso, bool) {
 	}
 
 	for _, a := range m.accesos {
-		if a.IDAcceso == idInt {
+		if a.IDAcceso == idInt { //Usa IDAcceso en lugar de ID
 			return a, true
 		}
 	}
 	return modelos.Acceso{}, false
 }
 
-// CrearAcceso inserta un nuevo registro de entrada al slice
 func (m *Memoria) CrearAcceso(acceso modelos.Acceso) modelos.Acceso {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	acceso.IDAcceso = m.nextAccesoID
+	acceso.IDAcceso = m.nextAccesoID // Usa IDAcceso en lugar de ID
 	acceso.TiempoEntrada = time.Now()
-	acceso.Estado = "Dentro" // Estado inicial por defecto
+	acceso.Estado = "Dentro"
 	m.nextAccesoID++
 
 	m.accesos = append(m.accesos, acceso)
 	return acceso
 }
 
-// ActualizarAcceso modifica el estado u observaciones de un acceso existente
 func (m *Memoria) ActualizarAcceso(id string, nuevosDatos modelos.Acceso) (modelos.Acceso, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -355,7 +474,7 @@ func (m *Memoria) ActualizarAcceso(id string, nuevosDatos modelos.Acceso) (model
 	}
 
 	for i, a := range m.accesos {
-		if a.IDAcceso == idInt {
+		if a.IDAcceso == idInt { // Usa IDAcceso en lugar de ID
 			if nuevosDatos.Estado != "" {
 				m.accesos[i].Estado = nuevosDatos.Estado
 			}
@@ -371,7 +490,6 @@ func (m *Memoria) ActualizarAcceso(id string, nuevosDatos modelos.Acceso) (model
 	return modelos.Acceso{}, false
 }
 
-// EliminarAcceso remueve un registro del histórico utilizando slicing
 func (m *Memoria) EliminarAcceso(id string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -382,7 +500,7 @@ func (m *Memoria) EliminarAcceso(id string) bool {
 	}
 
 	for i, a := range m.accesos {
-		if a.IDAcceso == idInt {
+		if a.IDAcceso == idInt { // Usa IDAcceso en lugar de ID
 			m.accesos = append(m.accesos[:i], m.accesos[i+1:]...)
 			return true
 		}
@@ -390,5 +508,5 @@ func (m *Memoria) EliminarAcceso(id string) bool {
 	return false
 }
 
-// Chequeo en tiempo de compilación: Memoria debe cumplir Almacen.
+// Chequeo en tiempo de compilación
 var _ Almacen = (*Memoria)(nil)

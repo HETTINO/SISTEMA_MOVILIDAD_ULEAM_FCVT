@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS vehiculo (
     tipo_vehiculo VARCHAR(50) NOT NULL,
     marca VARCHAR(50) NOT NULL,
     modelo VARCHAR(50) NOT NULL,
-    color VARCHAR(30) NOT NULL,
+    color VARCHAR(30) NOT NULLgit add internal/db/schema.sql,
     año INT NOT NULL,
     FOREIGN KEY (id_usuario) REFERENCES usuario(cedula) ON DELETE CASCADE
 );
