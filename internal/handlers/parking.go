@@ -44,6 +44,11 @@ func (h *ParkingHandler) CrearParqueadero(w http.ResponseWriter, r *http.Request
 		http.Error(w, "JSON inválido", http.StatusBadRequest)
 		return
 	}
+	// Validación básica
+	if req.Nombre == "" || req.Ubicacion == "" || req.Capacidad <= 0 {
+		http.Error(w, "nombre, ubicacion y capacidad son requeridos", http.StatusBadRequest)
+		return
+	}
 	parqueadero := h.store.CrearParqueadero(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

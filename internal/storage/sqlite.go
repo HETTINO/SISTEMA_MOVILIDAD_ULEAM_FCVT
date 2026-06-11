@@ -1,9 +1,10 @@
 package storage
 
 import (
-	"gorm.io/gorm"
-
 	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/modelos"
+	"fmt"
+
+	"gorm.io/gorm"
 )
 
 // AlmacenSQLite implementa la interfaz Almacen usando GORM sobre SQLite.
@@ -35,16 +36,25 @@ func (a *AlmacenSQLite) BuscarParqueaderoporID(id string) (modelos.Parqueadero, 
 }
 
 func (a *AlmacenSQLite) CrearParqueadero(req modelos.CrearParqueaderoRequest) modelos.Parqueadero {
+	var ultimo modelos.Parqueadero
+	a.db.Order("id DESC").First(&ultimo)
+
+	nuevoID := 1
+	if ultimo.ID != "" {
+		fmt.Sscanf(ultimo.ID, "%d", &nuevoID)
+		nuevoID++
+	}
+
 	p := modelos.Parqueadero{
+		ID:        fmt.Sprintf("%d", nuevoID),
 		Nombre:    req.Nombre,
 		Ubicacion: req.Ubicacion,
 		Capacidad: req.Capacidad,
-		Activo:    req.Activo,
+		Activo:    true,
 	}
 	a.db.Create(&p)
 	return p
 }
-
 func (a *AlmacenSQLite) ActualizarParqueadero(id string, req modelos.ActualizarParqueaderoRequest) (modelos.Parqueadero, bool) {
 	var existente modelos.Parqueadero
 	if err := a.db.First(&existente, "id = ?", id).Error; err != nil {
