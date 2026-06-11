@@ -298,5 +298,97 @@ func (m *Memoria) LiberarOcupacion(id string) (modelos.Ocupacion, bool) {
 	return modelos.Ocupacion{}, false
 }
 
+// =================================================================
+// ----- MÓDULO: ACCESO DE ENTRADA Y SALIDA (MÉTODOS CRUD) -----
+// =================================================================
+
+// ListarAccesos devuelve una copia segura de todos los registros de acceso
+func (m *Memoria) ListarAccesos() []modelos.Acceso {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	copia := make([]modelos.Acceso, len(m.accesos))
+	copy(copia, m.accesos)
+	return copia
+}
+
+// BuscarAccesoPorID busca un registro usando un ID string (convirtiéndolo a int)
+func (m *Memoria) BuscarAccesoPorID(id string) (modelos.Acceso, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return modelos.Acceso{}, false
+	}
+
+	for _, a := range m.accesos {
+		if a.IDAcceso == idInt {
+			return a, true
+		}
+	}
+	return modelos.Acceso{}, false
+}
+
+// CrearAcceso inserta un nuevo registro de entrada al slice
+func (m *Memoria) CrearAcceso(acceso modelos.Acceso) modelos.Acceso {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	acceso.IDAcceso = m.nextAccesoID
+	acceso.TiempoEntrada = time.Now()
+	acceso.Estado = "Dentro" // Estado inicial por defecto
+	m.nextAccesoID++
+
+	m.accesos = append(m.accesos, acceso)
+	return acceso
+}
+
+// ActualizarAcceso modifica el estado u observaciones de un acceso existente
+func (m *Memoria) ActualizarAcceso(id string, nuevosDatos modelos.Acceso) (modelos.Acceso, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return modelos.Acceso{}, false
+	}
+
+	for i, a := range m.accesos {
+		if a.IDAcceso == idInt {
+			if nuevosDatos.Estado != "" {
+				m.accesos[i].Estado = nuevosDatos.Estado
+			}
+			if nuevosDatos.Observaciones != "" {
+				m.accesos[i].Observaciones = nuevosDatos.Observaciones
+			}
+			if nuevosDatos.TiempoSalida != nil {
+				m.accesos[i].TiempoSalida = nuevosDatos.TiempoSalida
+			}
+			return m.accesos[i], true
+		}
+	}
+	return modelos.Acceso{}, false
+}
+
+// EliminarAcceso remueve un registro del histórico utilizando slicing
+func (m *Memoria) EliminarAcceso(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return false
+	}
+
+	for i, a := range m.accesos {
+		if a.IDAcceso == idInt {
+			m.accesos = append(m.accesos[:i], m.accesos[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 // Chequeo en tiempo de compilación: Memoria debe cumplir Almacen.
 var _ Almacen = (*Memoria)(nil)
