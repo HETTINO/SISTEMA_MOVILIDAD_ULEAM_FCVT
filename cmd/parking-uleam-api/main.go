@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/handlers"
 	"SISTEMA_MOVILIDAD_ULEAM_FCVT/internal/middleware"
@@ -84,19 +86,26 @@ func main() {
 	})
 
 	// =========================
-	// RUTAS DE ACCESO / LOGIN
+	// RUTAS DE ACCESO / LOGIN (Mensaje Automático)
 	// =========================
 	r.Route("/api/v1/acceso", func(r chi.Router) {
-		// Handler temporal para probar en Postman
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+			// Genera un número aleatorio de 4 dígitos para la placa
+			numeroAleatorio := time.Now().UnixNano()%9000 + 1000
+			placaAutomatica := fmt.Sprintf("ABC-%d", numeroAleatorio)
+
+			// Crea la respuesta automática en una sola línea
+			respuesta := map[string]interface{}{
+				"placa_vehiculo":  placaAutomatica,
+				"id_punto_acceso": 1,
+				"estado":          "Activo",
+				"observaciones":   "Ingreso automático generado por el servidor",
+			}
+
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"mensaje": "¡Conectado exitosamente!", "status": "ok"}`))
+			json.NewEncoder(w).Encode(respuesta)
 		})
-
-		// NOTA: Cuando crees tu handler real para el login (ej. authHandler),
-		// borras la función de arriba y lo pones así:
-		// r.Post("/", authHandler.Login)
 	})
 
 	fmt.Println("===================================")
