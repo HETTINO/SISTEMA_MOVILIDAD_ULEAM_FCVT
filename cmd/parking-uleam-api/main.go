@@ -38,6 +38,13 @@ func main() {
 	// 3. Inicializar handlers
 	parkingHandler := handlers.NewParkingHandler(parkingStore)
 
+	// 1. Inicializas tu manejador de transporte
+	transporteHandler := handlers.NewTransporteHandler()
+
+	// 2. Montas tu subrouter bajo la ruta que te exige la rúbrica
+	r.Mount("/api/v1/transporte", transporteHandler.Rutas())
+	
+
 	// 4. Router
 	r := chi.NewRouter()
 	r.Use(chimw.Logger)

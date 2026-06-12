@@ -2,6 +2,7 @@ package modelos
 
 import "time"
 
+
 type Ruta struct {
 	ID          int `json:"id"`
 	Nombre      string `json:"nombre"`
