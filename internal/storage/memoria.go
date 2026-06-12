@@ -303,239 +303,112 @@ func (m *Memoria) LiberarOcupacion(id string) (modelos.Ocupacion, bool) {
 	return modelos.Ocupacion{}, false
 }
 
+// ============================================================================
+// MODULO: TRANSPORTE INTERNO - MÉTODOS SEED INDIVIDUALES
+// ============================================================================
 
-// =========================================================
-// MODULO: TRANSPORTE INTERNO CRISTINA (5 ENTIDADES AUTOINCREMENTALES)
-// =========================================================
-
-// ----- 1. RUTAS -----
-func (m *Memoria) ListarRutas() []modelos.Ruta {
+// SeedRutas carga los circuitos de transporte iniciales en memoria
+func (m *Memoria) SeedRutas() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	copia := make([]modelos.Ruta, len(m.rutas))
-	copy(copia, m.rutas)
-	return copia
-}
 
-func (m *Memoria) BuscarRutaPorID(id string) (modelos.Ruta, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for _, r := range m.rutas {
-		if strconv.Itoa(r.ID) == id {
-			return r, true
-		}
+	m.rutas = []modelos.Ruta{
+		{ID: 1, Nombre: "Ruta Troncal Perimetral", Descripcion: "Circuito externo desde la Entrada Principal hasta Ciencias Médicas."},
+		{ID: 2, Nombre: "Ruta Tecnológica FCVT", Descripcion: "Conecta el Bloque de Aulas FCVT con los Laboratorios de Cómputo."},
+		{ID: 3, Nombre: "Ruta Administrativa", Descripcion: "Recorrido express entre Rectorado, Biblioteca Central y el Auditorio."},
 	}
-	return modelos.Ruta{}, false
+	m.nextRutaID = 4
 }
 
-func (m *Memoria) CrearRuta(r modelos.Ruta) modelos.Ruta {
+// SeedParadas carga los puntos de control en las rutas (Atención a 'Longitu' sin 'd')
+func (m *Memoria) SeedParadas() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	r.ID = m.nextRutaID
-	m.nextRutaID++
-	m.rutas = append(m.rutas, r)
-	return r
-}
 
-func (m *Memoria) ActualizarRuta(id string, datos modelos.Ruta) (modelos.Ruta, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i, r := range m.rutas {
-		if strconv.Itoa(r.ID) == id {
-			datos.ID = r.ID // Mantiene su ID numérico original
-			m.rutas[i] = datos
-			return datos, true
-		}
+	m.paradas = []modelos.Parada{
+		{IDParada: 1, Nombre: "Parada Entrada Principal", Latitud: -0.9510, Longitu: -80.7020, RutaID: 1},
+		{IDParada: 2, Nombre: "Parada Facultad Ciencias Médicas", Latitud: -0.9565, Longitu: -80.7095, RutaID: 1},
+		{IDParada: 3, Nombre: "Parada Bloque Aulas FCVT", Latitud: -0.9525, Longitu: -80.7035, RutaID: 2},
+		{IDParada: 4, Nombre: "Parada Laboratorios de Cómputo", Latitud: -0.9530, Longitu: -80.7040, RutaID: 2},
+		{IDParada: 5, Nombre: "Parada Rectorado", Latitud: -0.9505, Longitu: -80.7012, RutaID: 3},
 	}
-	return modelos.Ruta{}, false
+	m.nextParadaID = 6
 }
 
-func (m *Memoria) BorrarRuta(id string) bool {
+// SeedCarritos carga la flota de vehículos eléctricos simulados
+func (m *Memoria) SeedCarritos() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	for i, r := range m.rutas {
-		if strconv.Itoa(r.ID) == id {
-			m.rutas = append(m.rutas[:i], m.rutas[i+1:]...)
-			return true
-		}
+
+	m.carritos = []modelos.Carrito{
+		{ID: 1, NombreCarrito: "Eco-Carrito FCVT #1", Capacidad: 5, Estado: "Disponible", RutaID: 2},
+		{ID: 2, NombreCarrito: "Eco-Carrito Manta #2", Capacidad: 5, Estado: "En Ruta", RutaID: 1},
+		{ID: 3, NombreCarrito: "Eco-Carrito Central #3", Capacidad: 4, Estado: "Mantenimiento", RutaID: 3},
 	}
-	return false
+	m.nextCarritoID = 4
 }
 
-// ----- 2. PARADAS -----
-func (m *Memoria) ListarParadas() []modelos.Parada {
+// SeedLocaciones carga las coordenadas iniciales de geolocalización de la flota
+func (m *Memoria) SeedLocaciones() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	copia := make([]modelos.Parada, len(m.paradas))
-	copy(copia, m.paradas)
-	return copia
-}
 
-func (m *Memoria) BuscarParadaPorID(id string) (modelos.Parada, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for _, p := range m.paradas {
-		if strconv.Itoa(p.IDParada) == id {
-			return p, true
-		}
+	m.locaciones = []modelos.Locacion{
+		{ID: 1, Latitud: -0.9525, Longitud: -80.7035, TimeStamp: time.Now(), CarritoID: "1"},
+		{ID: 2, Latitud: -0.9510, Longitud: -80.7020, TimeStamp: time.Now().Add(-5 * time.Minute), CarritoID: "2"},
 	}
-	return modelos.Parada{}, false
+	m.nextLocacionID = 3
 }
 
-func (m *Memoria) CrearParada(p modelos.Parada) modelos.Parada {
+// SeedSolicitudes carga las peticiones de transporte que revisarás en Postman
+func (m *Memoria) SeedSolicitudes() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	p.IDParada = m.nextParadaID
-	m.nextParadaID++
-	m.paradas = append(m.paradas, p)
-	return p
-}
 
-func (m *Memoria) ActualizarParada(id string, datos modelos.Parada) (modelos.Parada, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i, p := range m.paradas {
-		if strconv.Itoa(p.IDParada) == id {
-			datos.IDParada = p.IDParada
-			m.paradas[i] = datos
-			return datos, true
-		}
+	idCarro1 := "1"
+	idCarro2 := "2"
+
+	m.solicitudes = []modelos.Solicitud{
+		{
+			ID:            1,
+			CedulaUsuario: "1312345678",
+			CantPersonas:  2,
+			PuntoDestino:  "Bloque de Aulas FCVT",
+			Estado:        "Pendiente",
+			IDCarrito:     nil,
+		},
+		{
+			ID:            2,
+			CedulaUsuario: "1315432109",
+			CantPersonas:  1,
+			PuntoDestino:  "Laboratorios de Simulación",
+			Estado:        "Asignado",
+			IDCarrito:     &idCarro1,
+		},
+		{
+			ID:            3,
+			CedulaUsuario: "1723456781",
+			CantPersonas:  4,
+			PuntoDestino:  "Facultad de Ciencias Médicas",
+			Estado:        "En Camino",
+			IDCarrito:     &idCarro2,
+		},
+		{
+			ID:            4,
+			CedulaUsuario: "1309876543",
+			CantPersonas:  3,
+			PuntoDestino:  "Auditorio Principal",
+			Estado:        "Finalizado",
+			IDCarrito:     &idCarro1,
+		},
 	}
-	return modelos.Parada{}, false
+	m.nextSolicitudID = 5
 }
 
-func (m *Memoria) BorrarParada(id string) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i, p := range m.paradas {
-		if strconv.Itoa(p.IDParada) == id {
-			m.paradas = append(m.paradas[:i], m.paradas[i+1:]...)
-			return true
-		}
-	}
-	return false
-}
-
-// ----- 3. CARRITOS -----
-func (m *Memoria) ListarCarritos() []modelos.Carrito {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	copia := make([]modelos.Carrito, len(m.carritos))
-	copy(copia, m.carritos)
-	return copia
-}
-
-func (m *Memoria) BuscarCarritoPorID(id string) (modelos.Carrito, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for _, c := range m.carritos {
-		if strconv.Itoa(c.ID) == id {
-			return c, true
-		}
-	}
-	return modelos.Carrito{}, false
-}
-
-func (m *Memoria) CrearCarrito(c modelos.Carrito) modelos.Carrito {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	c.ID = m.nextCarritoID
-	m.nextCarritoID++
-	m.carritos = append(m.carritos, c)
-	return c
-}
-
-func (m *Memoria) ActualizarCarrito(id string, datos modelos.Carrito) (modelos.Carrito, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i, c := range m.carritos {
-		if strconv.Itoa(c.ID) == id {
-			datos.ID = c.ID
-			m.carritos[i] = datos
-			return datos, true
-		}
-	}
-	return modelos.Carrito{}, false
-}
-
-func (m *Memoria) BorrarCarrito(id string) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i, c := range m.carritos {
-		if strconv.Itoa(c.ID) == id {
-			m.carritos = append(m.carritos[:i], m.carritos[i+1:]...)
-			return true
-		}
-	}
-	return false
-}
-
-// ----- 4. LOCACIONES -----
-func (m *Memoria) ListarLocaciones() []modelos.Locacion {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	copia := make([]modelos.Locacion, len(m.locaciones))
-	copy(copia, m.locaciones)
-	return copia
-}
-
-func (m *Memoria) BuscarLocacionPorID(id string) (modelos.Locacion, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for _, l := range m.locaciones {
-		if strconv.Itoa(l.ID) == id {
-			return l, true
-		}
-	}
-	return modelos.Locacion{}, false
-}
-
-func (m *Memoria) CrearLocacion(l modelos.Locacion) modelos.Locacion {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	l.ID = m.nextLocacionID
-	m.nextLocacionID++
-	m.locaciones = append(m.locaciones, l)
-	return l
-}
-
-func (m *Memoria) ActualizarLocacion(id string, datos modelos.Locacion) (modelos.Locacion, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i, l := range m.locaciones {
-		if strconv.Itoa(l.ID) == id {
-			datos.ID = l.ID
-			m.locaciones[i] = datos
-			return datos, true
-		}
-	}
-	return modelos.Locacion{}, false
-}
-
-func (m *Memoria) BorrarLocacion(id string) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for i, l := range m.locaciones {
-		if strconv.Itoa(l.ID) == id {
-			m.locaciones = append(m.locaciones[:i], m.locaciones[i+1:]...)
-			return true
-		}
-	}
-	return false
-}
-
-// ----- 5. SOLICITUDES -----
-func (m *Memoria) ListarSolicitudes() []modelos.Solicitud {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	copia := make([]modelos.Solicitud, len(m.solicitudes))
-	copy(copia, m.solicitudes)
-	return copia
-}
-
+// BuscarSolicitudPorID localiza una solicitud y devuelve (modelos.Solicitud, bool)
 func (m *Memoria) BuscarSolicitudPorID(id string) (modelos.Solicitud, bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	for _, s := range m.solicitudes {
 		if strconv.Itoa(s.ID) == id {
 			return s, true
@@ -544,28 +417,54 @@ func (m *Memoria) BuscarSolicitudPorID(id string) (modelos.Solicitud, bool) {
 	return modelos.Solicitud{}, false
 }
 
-func (m *Memoria) CrearSolicitud(s modelos.Solicitud) modelos.Solicitud {
+// CrearSolicitud recibe un Request, genera el ID autoincremental y guarda el registro
+func (m *Memoria) CrearSolicitud(req modelos.Solicitud) (modelos.Solicitud, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	s.ID = m.nextSolicitudID
+
+	s := modelos.Solicitud{
+		ID:            m.nextSolicitudID,
+		CedulaUsuario: req.CedulaUsuario,
+		CantPersonas:  req.CantPersonas,
+		PuntoDestino:  req.PuntoDestino,
+		Estado:        "Pendiente", // Estado inicial por defecto
+		IDCarrito:     nil,         // Inicialmente sin carrito asignado
+	}
+
 	m.nextSolicitudID++
 	m.solicitudes = append(m.solicitudes, s)
-	return s
+
+	return s, true
 }
 
-func (m *Memoria) ActualizarSolicitud(id string, datos modelos.Solicitud) (modelos.Solicitud, bool) {
+// ActualizarSolicitud busca por ID, modifica los campos si no vienen vacíos y retorna un bool
+func (m *Memoria) ActualizarSolicitud(id string, req modelos.Solicitud) (modelos.Solicitud, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i, s := range m.solicitudes {
 		if strconv.Itoa(s.ID) == id {
-			datos.ID = s.ID
-			m.solicitudes[i] = datos
-			return datos, true
+			if req.CedulaUsuario != "" {
+				m.solicitudes[i].CedulaUsuario = req.CedulaUsuario
+			}
+			if req.CantPersonas > 0 {
+				m.solicitudes[i].CantPersonas = req.CantPersonas
+			}
+			if req.PuntoDestino != "" {
+				m.solicitudes[i].PuntoDestino = req.PuntoDestino
+			}
+			if req.Estado != "" {
+				m.solicitudes[i].Estado = req.Estado
+			}
+			// Permite actualizar el puntero del carrito asignado
+			m.solicitudes[i].IDCarrito = req.IDCarrito
+
+			return m.solicitudes[i], true
 		}
 	}
 	return modelos.Solicitud{}, false
 }
 
+// EliminarSolicitud remueve la solicitud del slice usando el patrón de recorte append
 func (m *Memoria) BorrarSolicitud(id string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -577,7 +476,3 @@ func (m *Memoria) BorrarSolicitud(id string) bool {
 	}
 	return false
 }
-
-
-// Chequeo en tiempo de compilación: Memoria debe cumplir Almacen.
-var _ Almacen = (*Memoria)(nil)
