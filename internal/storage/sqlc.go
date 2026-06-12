@@ -272,5 +272,45 @@ func atoiSeguro(valor string) int {
 	return n
 }
 
+
+// ============================================================================
+// SOLICITUDES DE TRANSPORTE INTERNO (MELANIE)
+// ============================================================================
+
+func (a *AlmacenSQLite) ListarSolicitudes() []modelos.Solicitud {
+	var solicitudes []modelos.Solicitud
+	a.db.Find(&solicitudes)
+	return solicitudes
+}
+
+func (a *AlmacenSQLite) BuscarSolicitudPorID(id string) (modelos.Solicitud, bool) {
+	var s modelos.Solicitud
+	if err := a.db.First(&s, "id = ?", id).Error; err != nil {
+		return modelos.Solicitud{}, false
+	}
+	return s, true
+}
+
+func (a *AlmacenSQLite) CrearSolicitud(s modelos.Solicitud) modelos.Solicitud {
+	a.db.Create(&s)
+	return s
+}
+
+func (a *AlmacenSQLite) ActualizarSolicitud(id string, datos modelos.Solicitud) (modelos.Solicitud, bool) {
+	var s modelos.Solicitud
+	if err := a.db.First(&s, "id = ?", id).Error; err != nil {
+		return modelos.Solicitud{}, false
+	}
+	
+	// Utiliza el método Updates de GORM tal como lo hace tu equipo
+	a.db.Model(&s).Updates(datos)
+	return s, true
+}
+
+func (a *AlmacenSQLite) BorrarSolicitud(id string) bool {
+	res := a.db.Where("id = ?", id).Delete(&modelos.Solicitud{})
+	return res.RowsAffected > 0
+}
+
 // Chequeo en tiempo de compilación.
 var _ Almacen = (*AlmacenSQLC)(nil)
