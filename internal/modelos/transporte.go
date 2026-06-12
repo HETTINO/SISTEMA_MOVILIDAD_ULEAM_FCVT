@@ -12,7 +12,7 @@ type Parada struct {
 	IDParada int     `json:"id_parada"`
 	Nombre   string  `json:"nombre"`
 	Latitud  float64 `json:"latitud"`
-	Longitud float64 `json:"longitud"` 
+	Longitud float64 `json:"longitud"`
 	RutaID   int     `json:"ruta_id"`
 }
 
@@ -29,14 +29,14 @@ type Locacion struct {
 	Latitud   float64   `json:"latitud"`
 	Longitud  float64   `json:"longitud"`
 	TimeStamp time.Time `json:"time_stamp"`
-	CarritoID int       `json:"carrito_id"` 
+	CarritoID int       `json:"carrito_id"`
 }
 
 type Solicitud struct {
-	ID            int     `json:"id"`
-	CedulaUsuario string  `json:"cedula_usuario"`
-	CantPersonas  int     `json:"cant_personas"`
-	PuntoDestino  string  `json:"punto_destino"`
-	Estado        string  `json:"estado"`
-	IDCarrito     *int    `json:"id_carrito,omitempty"` 
+	ID            int    `json:"id"`
+	CedulaUsuario string `json:"cedula_usuario"`
+	CantPersonas  int    `json:"cant_personas"`
+	PuntoDestino  string `json:"punto_destino"`
+	Estado        string `json:"estado"`
+	IDCarrito     *int   `json:"id_carrito,omitempty"`
 }
