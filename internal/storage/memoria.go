@@ -20,12 +20,16 @@ type Memoria struct {
 
 	// MODULO: TRANSPORTE INTERNO CRISTINA
 	rutas             []modelos.Ruta
-	nextRutaID        int
 	paradas           []modelos.Parada
-	nextParadaID      int
 	solicitudes       []modelos.Solicitud
-	nextSolicitudID   int
+	carritos          []modelos.Carrito
+	locaciones        []modelos.Locacion
 
+	nextRutaID        int
+	nextSolicitudID   int
+	nextParadaID      int
+	nextCarritoID     int
+	nextLocacionID    int
 }
 
 
@@ -37,13 +41,18 @@ func NewMemoria() *Memoria {
 		nextEspacioID: 1,
 		nextparkingID: 1,
 
-		// MODULO: TRANSPORTE INTERNO CRISTINA (Inicialización)
+		// MODULO: TRANSPORTE INTERNO CRISTINA
 		rutas:           []modelos.Ruta{},
-		nextRutaID:      1,
 		paradas:         []modelos.Parada{},
-		nextParadaID:    1,
 		solicitudes:     []modelos.Solicitud{},
+		carritos:        []modelos.Carrito{},
+		locaciones:      []modelos.Locacion{},
+
+		nextRutaID:      1,
 		nextSolicitudID: 1,
+		nextParadaID:    1,
+		nextCarritoID:   1,
+		nextLocacionID:  1,
 	}
 }
 
@@ -294,6 +303,280 @@ func (m *Memoria) LiberarOcupacion(id string) (modelos.Ocupacion, bool) {
 	return modelos.Ocupacion{}, false
 }
 
+
+// =========================================================
+// MODULO: TRANSPORTE INTERNO CRISTINA (5 ENTIDADES AUTOINCREMENTALES)
+// =========================================================
+
+// ----- 1. RUTAS -----
+func (m *Memoria) ListarRutas() []modelos.Ruta {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copia := make([]modelos.Ruta, len(m.rutas))
+	copy(copia, m.rutas)
+	return copia
+}
+
+func (m *Memoria) BuscarRutaPorID(id string) (modelos.Ruta, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, r := range m.rutas {
+		if strconv.Itoa(r.ID) == id {
+			return r, true
+		}
+	}
+	return modelos.Ruta{}, false
+}
+
+func (m *Memoria) CrearRuta(r modelos.Ruta) modelos.Ruta {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	r.ID = m.nextRutaID
+	m.nextRutaID++
+	m.rutas = append(m.rutas, r)
+	return r
+}
+
+func (m *Memoria) ActualizarRuta(id string, datos modelos.Ruta) (modelos.Ruta, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, r := range m.rutas {
+		if strconv.Itoa(r.ID) == id {
+			datos.ID = r.ID // Mantiene su ID numérico original
+			m.rutas[i] = datos
+			return datos, true
+		}
+	}
+	return modelos.Ruta{}, false
+}
+
+func (m *Memoria) BorrarRuta(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, r := range m.rutas {
+		if strconv.Itoa(r.ID) == id {
+			m.rutas = append(m.rutas[:i], m.rutas[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// ----- 2. PARADAS -----
+func (m *Memoria) ListarParadas() []modelos.Parada {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copia := make([]modelos.Parada, len(m.paradas))
+	copy(copia, m.paradas)
+	return copia
+}
+
+func (m *Memoria) BuscarParadaPorID(id string) (modelos.Parada, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, p := range m.paradas {
+		if strconv.Itoa(p.IDParada) == id {
+			return p, true
+		}
+	}
+	return modelos.Parada{}, false
+}
+
+func (m *Memoria) CrearParada(p modelos.Parada) modelos.Parada {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	p.IDParada = m.nextParadaID
+	m.nextParadaID++
+	m.paradas = append(m.paradas, p)
+	return p
+}
+
+func (m *Memoria) ActualizarParada(id string, datos modelos.Parada) (modelos.Parada, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, p := range m.paradas {
+		if strconv.Itoa(p.IDParada) == id {
+			datos.IDParada = p.IDParada
+			m.paradas[i] = datos
+			return datos, true
+		}
+	}
+	return modelos.Parada{}, false
+}
+
+func (m *Memoria) BorrarParada(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, p := range m.paradas {
+		if strconv.Itoa(p.IDParada) == id {
+			m.paradas = append(m.paradas[:i], m.paradas[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// ----- 3. CARRITOS -----
+func (m *Memoria) ListarCarritos() []modelos.Carrito {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copia := make([]modelos.Carrito, len(m.carritos))
+	copy(copia, m.carritos)
+	return copia
+}
+
+func (m *Memoria) BuscarCarritoPorID(id string) (modelos.Carrito, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, c := range m.carritos {
+		if strconv.Itoa(c.ID) == id {
+			return c, true
+		}
+	}
+	return modelos.Carrito{}, false
+}
+
+func (m *Memoria) CrearCarrito(c modelos.Carrito) modelos.Carrito {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	c.ID = m.nextCarritoID
+	m.nextCarritoID++
+	m.carritos = append(m.carritos, c)
+	return c
+}
+
+func (m *Memoria) ActualizarCarrito(id string, datos modelos.Carrito) (modelos.Carrito, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, c := range m.carritos {
+		if strconv.Itoa(c.ID) == id {
+			datos.ID = c.ID
+			m.carritos[i] = datos
+			return datos, true
+		}
+	}
+	return modelos.Carrito{}, false
+}
+
+func (m *Memoria) BorrarCarrito(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, c := range m.carritos {
+		if strconv.Itoa(c.ID) == id {
+			m.carritos = append(m.carritos[:i], m.carritos[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// ----- 4. LOCACIONES -----
+func (m *Memoria) ListarLocaciones() []modelos.Locacion {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copia := make([]modelos.Locacion, len(m.locaciones))
+	copy(copia, m.locaciones)
+	return copia
+}
+
+func (m *Memoria) BuscarLocacionPorID(id string) (modelos.Locacion, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, l := range m.locaciones {
+		if strconv.Itoa(l.ID) == id {
+			return l, true
+		}
+	}
+	return modelos.Locacion{}, false
+}
+
+func (m *Memoria) CrearLocacion(l modelos.Locacion) modelos.Locacion {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	l.ID = m.nextLocacionID
+	m.nextLocacionID++
+	m.locaciones = append(m.locaciones, l)
+	return l
+}
+
+func (m *Memoria) ActualizarLocacion(id string, datos modelos.Locacion) (modelos.Locacion, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, l := range m.locaciones {
+		if strconv.Itoa(l.ID) == id {
+			datos.ID = l.ID
+			m.locaciones[i] = datos
+			return datos, true
+		}
+	}
+	return modelos.Locacion{}, false
+}
+
+func (m *Memoria) BorrarLocacion(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, l := range m.locaciones {
+		if strconv.Itoa(l.ID) == id {
+			m.locaciones = append(m.locaciones[:i], m.locaciones[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// ----- 5. SOLICITUDES -----
+func (m *Memoria) ListarSolicitudes() []modelos.Solicitud {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copia := make([]modelos.Solicitud, len(m.solicitudes))
+	copy(copia, m.solicitudes)
+	return copia
+}
+
+func (m *Memoria) BuscarSolicitudPorID(id string) (modelos.Solicitud, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, s := range m.solicitudes {
+		if strconv.Itoa(s.ID) == id {
+			return s, true
+		}
+	}
+	return modelos.Solicitud{}, false
+}
+
+func (m *Memoria) CrearSolicitud(s modelos.Solicitud) modelos.Solicitud {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	s.ID = m.nextSolicitudID
+	m.nextSolicitudID++
+	m.solicitudes = append(m.solicitudes, s)
+	return s
+}
+
+func (m *Memoria) ActualizarSolicitud(id string, datos modelos.Solicitud) (modelos.Solicitud, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, s := range m.solicitudes {
+		if strconv.Itoa(s.ID) == id {
+			datos.ID = s.ID
+			m.solicitudes[i] = datos
+			return datos, true
+		}
+	}
+	return modelos.Solicitud{}, false
+}
+
+func (m *Memoria) BorrarSolicitud(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i, s := range m.solicitudes {
+		if strconv.Itoa(s.ID) == id {
+			m.solicitudes = append(m.solicitudes[:i], m.solicitudes[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
 
 
 // Chequeo en tiempo de compilación: Memoria debe cumplir Almacen.
