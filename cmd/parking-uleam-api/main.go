@@ -40,6 +40,10 @@ func main() {
 
 	// 4. Router
 	r := chi.NewRouter()
+
+	// ALimpia barras dobles y elimina la barra final (trailing slash) automáticamente
+	r.Use(chimw.CleanPath)
+
 	r.Use(chimw.Logger)
 	r.Use(chimw.Recoverer)
 	r.Use(middleware.CORS)
@@ -59,7 +63,6 @@ func main() {
 	// RUTAS DE ESPACIOS
 	// =========================
 	r.Route("/api/v1/espacios", func(r chi.Router) {
-
 		r.Get("/", parkingHandler.ListarEspacios)
 		r.Get("/{id}", parkingHandler.ObtenerEspacio)
 
@@ -68,7 +71,9 @@ func main() {
 		r.Delete("/{id}", parkingHandler.EliminarEspacio)
 	})
 
-	// Rutas de ocpuacion
+	// =========================
+	// RUTAS DE OCUPACIONES
+	// =========================
 	r.Route("/api/v1/ocupaciones", func(r chi.Router) {
 		r.Get("/", parkingHandler.ListarOcupaciones)
 		r.Get("/{id}", parkingHandler.ObtenerOcupacion)
@@ -76,6 +81,22 @@ func main() {
 		r.Post("/", parkingHandler.CrearOcupacion)
 
 		r.Put("/{id}/liberar", parkingHandler.LiberarOcupacion)
+	})
+
+	// =========================
+	// RUTAS DE ACCESO / LOGIN
+	// =========================
+	r.Route("/api/v1/acceso", func(r chi.Router) {
+		// Handler temporal para probar en Postman
+		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"mensaje": "¡Conectado exitosamente!", "status": "ok"}`))
+		})
+
+		// NOTA: Cuando crees tu handler real para el login (ej. authHandler),
+		// borras la función de arriba y lo pones así:
+		// r.Post("/", authHandler.Login)
 	})
 
 	fmt.Println("===================================")
