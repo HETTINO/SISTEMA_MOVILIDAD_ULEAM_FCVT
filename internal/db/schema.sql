@@ -35,41 +35,60 @@ CREATE TABLE ocupaciones (
 -- MÓDULO: TRANSPORTE INTERNO - CRISTINA
 -- ==========================================
 
-CREATE TABLE rutas (
-    id     TEXT PRIMARY KEY,
-    nombre      TEXT NOT NULL,
-    descripcion TEXT NOT NULL
+-- Tabla base necesaria para la relación con Solicitud (Módulo de Acceso)
+CREATE TABLE IF NOT EXISTS Usuario (
+    Cedula int(10) NOT NULL PRIMARY KEY,
+    Nombre_usuario char(50) NOT NULL,
+    Contrasena char(50) NOT NULL,
+    Email char(50) NOT NULL,
+    Rol char(50) NOT NULL
 );
 
-CREATE TABLE paradas (
-    id_parada    TEXT PRIMARY KEY,
-    nombre       TEXT NOT NULL,
-    latitud      REAL NOT NULL,
-    longitu      REAL NOT NULL,
-    ruta_id     TEXT NOT NULL
+-- 1. Tabla: Ruta
+CREATE TABLE IF NOT EXISTS Ruta (
+    ID_ruta INTEGER PRIMARY KEY AUTOINCREMENT,
+    Nombre string NOT NULL,
+    Descripcion string NOT NULL
 );
 
-CREATE TABLE carritos (
-    id     TEXT PRIMARY KEY,
-    nombre_carrito TEXT NOT NULL,
-    capacidad      INTEGER NOT NULL,
-    estado         TEXT NOT NULL,
-    ruta_id        TEXT NOT NULL
+-- 2. Tabla: Paradas
+CREATE TABLE IF NOT EXISTS Paradas (
+    ID_parada INTEGER PRIMARY KEY AUTOINCREMENT,
+    FK2_ID_ruta INTEGER NOT NULL,
+    Nombre string NOT NULL,
+    latitud float NOT NULL,
+    longitu float NOT NULL, -- Mantenemos el nombre 'longitu' tal como está en tu diagrama
+    FOREIGN KEY (FK2_ID_ruta) REFERENCES Ruta(ID_ruta) ON DELETE CASCADE
 );
 
-CREATE TABLE locaciones (
-    id TEXT PRIMARY KEY,
-    latitud     REAL NOT NULL,
-    longitud    REAL NOT NULL,
-    time_stamp  TEXT NOT NULL,
-    carrito_id  TEXT NOT NULL
+-- 3. Tabla: Carrito
+CREATE TABLE IF NOT EXISTS Carrito (
+    ID_carrito INTEGER PRIMARY KEY AUTOINCREMENT,
+    FK1_ID_ruta INTEGER NOT NULL,
+    Nombre_carrito string NOT NULL,
+    Capacidad int NOT NULL,
+    Estado string NOT NULL,
+    FOREIGN KEY (FK1_ID_ruta) REFERENCES Ruta(ID_ruta)
 );
 
-CREATE TABLE solicitudes (
-    id   TEXT PRIMARY KEY,
-    cedula_usuario TEXT NOT NULL,
-    cant_personas  INTEGER NOT NULL,
-    punto_destino  TEXT NOT NULL,
-    estado         TEXT NOT NULL,
-    carrito_id     TEXT
+-- 4. Tabla: Locacion (Historial de ubicación del carrito)
+CREATE TABLE IF NOT EXISTS Locacion (
+    ID_locacion INTEGER PRIMARY KEY AUTOINCREMENT,
+    FK1_ID_carrito INTEGER NOT NULL,
+    latitud float NOT NULL,
+    longitud float NOT NULL,
+    time_stamp datetime NOT NULL,
+    FOREIGN KEY (FK1_ID_carrito) REFERENCES Carrito(ID_carrito) ON DELETE CASCADE
+);
+
+-- 5. Tabla: Solicitud
+CREATE TABLE IF NOT EXISTS Solicitud (
+    ID_solicitud INTEGER PRIMARY KEY AUTOINCREMENT,
+    FK1_Cedula_usuario int(10) NOT NULL,
+    FK2_ID_carrito int NOT NULL,
+    Cant_personas int NOT NULL,
+    Punto_destino string NOT NULL,
+    Estado string NOT NULL,
+    FOREIGN KEY (FK1_Cedula_usuario) REFERENCES Usuario(Cedula),
+    FOREIGN KEY (FK2_ID_carrito) REFERENCES Carrito(ID_carrito)
 );
