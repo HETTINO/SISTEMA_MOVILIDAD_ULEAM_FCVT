@@ -111,4 +111,3 @@ func (h *TransporteHandler) CrearLocacion(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(h.store.CrearLocacion(l))
 }
 
-// ... Mantén los métodos de Solicitudes que ya tenías ...
