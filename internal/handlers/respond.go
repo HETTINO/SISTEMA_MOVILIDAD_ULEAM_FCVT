@@ -5,14 +5,6 @@ import (
 	"net/http"
 )
 
-type Server struct {
-    Storage storage.Almacen
-}
-
-// NewTransporteHandler es el constructor que necesitas en main.go
-func NewTransporteHandler(a storage.Almacen) *Server {
-    return &Server{Storage: a}
-}
 // responderJSON escribe una respuesta JSON con el status code dado
 func responderJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
